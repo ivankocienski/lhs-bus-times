@@ -60,7 +60,7 @@ while(1) {
 
       my $color = ($i % 2) + 1;
 
-      my $line = sprintf( "%d  - %17s    %2d %7s", $i + 1, $dest, $id, $delay );
+      my $line = sprintf( "%d  - %17s   %3s %7s", $i + 1, $dest, $id, $delay );
 
       attron(COLOR_PAIR($color));
       addstr( 2 + $i, 4, $line );
