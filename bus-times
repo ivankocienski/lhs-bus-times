@@ -1,0 +1,86 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+print "Starting up...\n";
+
+use LWP::UserAgent;
+use JSON;
+use Curses;
+
+system "setfont CyrSlav-VGA32x16";
+
+my $stop_id = 76309; # pritchards road
+
+my $url = "http://countdown.tfl.gov.uk/stopBoard/$stop_id";
+
+my $ua = LWP::UserAgent->new;
+
+# Create a request
+my $req = HTTP::Request->new(GET => $url);
+
+initscr();
+start_color();
+
+init_pair(1, COLOR_WHITE,  COLOR_BLACK);
+init_pair(2, COLOR_YELLOW, COLOR_BLACK);
+init_pair(3, COLOR_RED,    COLOR_BLACK);
+
+clear();
+addstr( 0, 0, "Fetching data..." );
+refresh();
+
+END {
+  endwin();
+}
+
+
+while(1) {
+
+  clear();
+
+  my $updated = 'N/A';
+
+  if($ua->is_online) {  
+
+    my $response = $ua->request($req)->content;
+
+    my $data     = from_json($response);
+    my $arrivals = $data->{arrivals};
+
+    $updated = $data->{lastUpdated}; 
+
+    attron(A_BOLD);
+
+    for( my $i = 0; $i < 5; $i++ ) {
+      my $id    = @$arrivals[$i]->{routeId};
+      my $dest  = @$arrivals[$i]->{destination};
+      my $delay = @$arrivals[$i]->{estimatedWait};
+
+      my $color = ($i % 2) + 1;
+
+      my $line = sprintf( "%d  - %17s    %2d %7s", $i + 1, $dest, $id, $delay );
+
+      attron(COLOR_PAIR($color));
+      addstr( 2 + $i, 4, $line );
+      attroff(COLOR_PAIR($color));
+    }
+
+  } else {
+
+    attron(COLOR_PAIR(3));
+    addstr( 2, 2, "Network failure / offline" );
+    attroff(COLOR_PAIR(3));
+  }
+
+  attroff(A_BOLD);
+  
+  addstr( 0, 0, "Bus times for Pritchards road" );
+  addstr( 9, 0, "Updated: $updated " );
+
+  refresh();
+
+  select( undef, undef, undef, 20 );
+}
+
