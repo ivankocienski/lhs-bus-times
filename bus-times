@@ -53,7 +53,10 @@ while(1) {
 
     attron(A_BOLD);
 
-    for( my $i = 0; $i < 5; $i++ ) {
+    my $count = scalar $arrivals;
+    $count = 6 if $count > 6;
+
+    for( my $i = 0; $i < $count; $i++ ) {
       my $id    = @$arrivals[$i]->{routeId};
       my $dest  = @$arrivals[$i]->{destination};
       my $delay = @$arrivals[$i]->{estimatedWait};
@@ -70,14 +73,14 @@ while(1) {
   } else {
 
     attron(COLOR_PAIR(3));
-    addstr( 2, 2, "Network failure / offline" );
+    addstr( 2, 4, "Network failure / offline" );
     attroff(COLOR_PAIR(3));
   }
 
   attroff(A_BOLD);
   
-  addstr( 0, 0, "Bus times for Pritchards road" );
-  addstr( 9, 0, "Updated: $updated " );
+  addstr( 0, 2, "Bus times for Pritchards road" );
+  addstr( 9, 2, "Updated: $updated " );
 
   refresh();
 
