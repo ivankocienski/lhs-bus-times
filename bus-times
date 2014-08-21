@@ -6,10 +6,16 @@ use warnings;
 print "Starting up...\n";
 
 use LWP::UserAgent;
+use IO::Handle;
 use JSON;
 use Curses;
 
-system "setfont CyrSlav-VGA32x16";
+#system "setfont CyrSlav-VGA32x16";
+
+my $api_log;
+
+open( $api_log, ">>", "/home/ivan/bus-times.log" ) or die $!;
+
 
 my $stop_id = 76309; # pritchards road
 
@@ -45,6 +51,8 @@ while(1) {
   if($ua->is_online) {  
 
     my $response = $ua->request($req)->content;
+    print $api_log "$response\n";
+    $api_log->flush();
 
     my $data     = from_json($response);
     my $arrivals = $data->{arrivals};
@@ -56,33 +64,38 @@ while(1) {
     my $count = scalar $arrivals;
     $count = 6 if $count > 6;
 
-    for( my $i = 0; $i < $count; $i++ ) {
-      my $id    = @$arrivals[$i]->{routeId};
-      my $dest  = @$arrivals[$i]->{destination};
-      my $delay = @$arrivals[$i]->{estimatedWait};
+    print $api_log "count=$count\n";
+    
+    if($count > 0) {
 
-      my $color = ($i % 2) + 1;
-
-      my $line = sprintf( "%d  - %17s   %3s %7s", $i + 1, $dest, $id, $delay );
-
-      attron(COLOR_PAIR($color));
-      addstr( 2 + $i, 4, $line );
-      attroff(COLOR_PAIR($color));
-    }
-
-  } else {
-
-    attron(COLOR_PAIR(3));
-    addstr( 2, 4, "Network failure / offline" );
-    attroff(COLOR_PAIR(3));
-  }
-
-  attroff(A_BOLD);
+      for( my $i = 0; $i < $count; $i++ ) {
+        my $id    = @$arrivals[$i]->{routeId};
+        my $dest  = @$arrivals[$i]->{destination};
+        my $delay = @$arrivals[$i]->{estimatedWait};
   
-  addstr( 0, 2, "Bus times for Pritchards road" );
-  addstr( 9, 2, "Updated: $updated " );
-
-  refresh();
+        my $color = ($i % 2) + 1;
+  
+        my $line = sprintf( "%d  - %17s   %3s %7s", $i + 1, $dest, $id, $delay );
+  
+        attron(COLOR_PAIR($color));
+        addstr( 2 + $i, 4, $line );
+        attroff(COLOR_PAIR($color));
+      }
+  
+    } else {
+  
+      attron(COLOR_PAIR(3));
+      addstr( 2, 4, "Network failure / offline" );
+      attroff(COLOR_PAIR(3));
+    }
+  
+    attroff(A_BOLD);
+    
+    addstr( 0, 2, "Bus times for Pritchards road" );
+    addstr( 9, 2, "Updated: $updated " );
+  
+    refresh();
+  }
 
   select( undef, undef, undef, 20 );
 }
