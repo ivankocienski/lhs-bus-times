@@ -6,6 +6,7 @@ use warnings;
 print "Starting up...\n";
 
 use LWP::UserAgent;
+use Data::Dumper;
 use IO::Handle;
 use JSON;
 use Curses;
@@ -26,49 +27,55 @@ my $ua = LWP::UserAgent->new;
 # Create a request
 my $req = HTTP::Request->new(GET => $url);
 
-initscr();
-start_color();
+#initscr();
+#start_color();
 
-init_pair(1, COLOR_WHITE,  COLOR_BLACK);
-init_pair(2, COLOR_YELLOW, COLOR_BLACK);
-init_pair(3, COLOR_RED,    COLOR_BLACK);
+#init_pair(1, COLOR_WHITE,  COLOR_BLACK);
+#init_pair(2, COLOR_YELLOW, COLOR_BLACK);
+#init_pair(3, COLOR_RED,    COLOR_BLACK);
 
-clear();
-addstr( 0, 0, "Fetching data..." );
-refresh();
+#clear();
+#addstr( 0, 0, "Fetching data..." );
+#refresh();
 
 END {
-  endwin();
+#  endwin();
 }
 
+my $response = q{{"lastUpdated":"21:32","filterOut":[],"arrivals":[{"routeId":"48","routeName":"48","destination":"London Bridge","estimatedWait":"6 min","scheduledTime":"20:39","isRealTime":true,"isCancelled":false},{"routeId":"26","routeName":"26","destination":"Waterloo","estimatedWait":"6 min","scheduledTime":"20:39","isRealTime":true,"isCancelled":false},{"routeId":"55","routeName":"55","destination":"Oxford Circus","estimatedWait":"11 min","scheduledTime":"20:44","isRealTime":true,"isCancelled":false},{"routeId":"48","routeName":"48","destination":"London Bridge","estimatedWait":"18 min","scheduledTime":"20:51","isRealTime":true,"isCancelled":false},{"routeId":"55","routeName":"55","destination":"Oxford Circus","estimatedWait":"21 min","scheduledTime":"20:53","isRealTime":true,"isCancelled":false}],"serviceDisruptions":{"infoMessages":["London Bridge Station -Rebuilding works at are limiting entry to and from London Bridge Station. Stay safe by using only the designated walkways when in and around the station"],"importantMessages":[],"criticalMessages":[]}}};
 
 while(1) {
 
-  clear();
+#  clear();
 
   my $updated = 'N/A';
 
-  if($ua->is_online) {  
+  if(1) { #$ua->is_online) {  
 
-    my $response = $ua->request($req)->content;
-    print $api_log "$response\n";
-    $api_log->flush();
+    #my $response = $ua->request($req)->content;
+    #print $api_log "$response\n";
+    #$api_log->flush();
 
     my $data     = from_json($response);
     my $arrivals = $data->{arrivals};
 
     $updated = $data->{lastUpdated}; 
 
-    attron(A_BOLD);
+#    attron(A_BOLD);
 
-    my $count = scalar $arrivals;
+    my $count = scalar(@$arrivals);
+    print "count=$count\n";
     $count = 6 if $count > 6;
 
-    print $api_log "count=$count\n";
+    print "count=$count\n";
     
     if($count > 0) {
 
       for( my $i = 0; $i < $count; $i++ ) {
+
+        print "i=$i\n";
+        print Dumper(@$arrivals[$i]);
+
         my $id    = @$arrivals[$i]->{routeId};
         my $dest  = @$arrivals[$i]->{destination};
         my $delay = @$arrivals[$i]->{estimatedWait};
@@ -77,24 +84,24 @@ while(1) {
   
         my $line = sprintf( "%d  - %17s   %3s %7s", $i + 1, $dest, $id, $delay );
   
-        attron(COLOR_PAIR($color));
-        addstr( 2 + $i, 4, $line );
-        attroff(COLOR_PAIR($color));
+#        attron(COLOR_PAIR($color));
+#        addstr( 2 + $i, 4, $line );
+#        attroff(COLOR_PAIR($color));
       }
   
     } else {
   
-      attron(COLOR_PAIR(3));
-      addstr( 2, 4, "Network failure / offline" );
-      attroff(COLOR_PAIR(3));
+#      attron(COLOR_PAIR(3));
+#      addstr( 2, 4, "Network failure / offline" );
+#      attroff(COLOR_PAIR(3));
     }
   
-    attroff(A_BOLD);
+#    attroff(A_BOLD);
     
-    addstr( 0, 2, "Bus times for Pritchards road" );
-    addstr( 9, 2, "Updated: $updated " );
+#    addstr( 0, 2, "Bus times for Pritchards road" );
+#    addstr( 9, 2, "Updated: $updated " );
   
-    refresh();
+#    refresh();
   }
 
   select( undef, undef, undef, 20 );
